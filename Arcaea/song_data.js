@@ -21,6 +21,9 @@ function addToTable(name, difficulty, count) {
 
 function query(name, difficulty) {
     console.log(`Querying ${name} ${difficulty}`)
+    if (table[name] === undefined || table[name][difficulty] === undefined) {
+        return "Unknown"
+    }
     return table[name][difficulty];
 }
 
@@ -30,15 +33,21 @@ function addNoteCount(link, name, difficulty) {
 
     // TODO: FIX THIS PART
 
-    fetch(`https://arcaea.fandom.com/api.php?action=query&titles=${name}&format=json`)
+    fetch(`https://arcaea.fandom.com/api.php?action=query&titles=${pageName}&format=json`)
+    .then(a => a.json())
     .then(a => {
-        pages = a.json().query.pages
-        return pages.keys[0]
+        let pages = a.query.pages
+      	let keys = Object.keys(pages)
+        if (keys.length < 1) {
+            console.log(`An error occured while querying${name}`)
+            return -1
+        }
+        return keys[0]
     })
     .then(id => {
         let args = [
             "action=parse",
-            `page=${pageName}`,
+            `pageid=${id}`,
             "prop=wikitext",
             "format=json"
         ]
@@ -46,10 +55,17 @@ function addNoteCount(link, name, difficulty) {
     })
     .then(a => a.json())
     .then(a => {
-        const regex = new RegExp(`${difficulty} Combo = \\d+`, "g");
-        let substr = a.parse.wikitext["*"].match(regex)[0]
-        let count = substr.split(" = ")[1]
-        this.addToTable(name, difficulty, count)
+        const regex = new RegExp(`${difficulty}Combo=\\d+`, "g");
+        let rawText = a.parse.wikitext["*"].replaceAll(/\s/g, "")
+        let matches = rawText.match(regex)
+        if (matches === null) {
+            console.log("Regex not found for this song:")
+            console.log(rawText)
+            console.log(regex)
+        } else {
+            let count = matches[0].split("=")[1]
+            this.addToTable(name, difficulty, count)
+        }
     })
 }
 
@@ -71,7 +87,7 @@ class Song {
         if (this.byd === "") {
             diffs.push(["Future", this.ftr])
         } else {
-            diffs = diffs.concat(["Future", this.ftr], ["Beyond", this.byd])
+            diffs = diffs.concat([["Future", this.ftr], ["Beyond", this.byd]])
         }
         return diffs.map(diff => [
                 this.id,
@@ -103,25 +119,28 @@ function copyText(text) {
     document.body.removeChild(el);
 }
 
-
-
-getText = (nodes, id) => nodes.item(id).textContent.replaceAll("\n", "")
-getLink = nodes => nodes.item(2).querySelector("a").href
-
 songs = []
-el = document.querySelector(".songbydate-table")
-rows = el.querySelectorAll("tbody tr")
-for (let row of rows) {
-    let cells = row.querySelectorAll("td")
-    let id = getText(cells, 0)
-    let name = getText(cells, 2)
-    let ftr = getText(cells, 6)
-    let byd = getText(cells, 7)
-    let link = getLink(cells)
-    songs.push(new Song(
-        id, name, ftr, byd, link
-    ))
+
+function run() {
+    getText = (nodes, id) => nodes.item(id).textContent.replaceAll("\n", "")
+    getLink = nodes => nodes.item(2).querySelector("a").href
+
+    songs = []
+    el = document.querySelector(".songbydate-table")
+    rows = el.querySelectorAll("tbody tr")
+    for (let row of rows) {
+        let cells = row.querySelectorAll("td")
+        let id = getText(cells, 0)
+        let name = getText(cells, 2)
+        let ftr = getText(cells, 6)
+        let byd = getText(cells, 7)
+        let link = getLink(cells)
+        songs.push(new Song(
+            id, name, ftr, byd, link
+        ))
+    }
 }
 
+run()
 // wtf = songs.map(song => song.toString()).join("\n")
 // copyText(wtf)
