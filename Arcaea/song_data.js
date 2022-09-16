@@ -1,16 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
 table = {}
 function addToTable(name, difficulty, count) {
     if (table[name] === undefined) {
@@ -123,7 +110,7 @@ songs = []
 
 function run() {
     getText = (nodes, id) => nodes.item(id).textContent.replaceAll("\n", "")
-    getLink = nodes => nodes.item(2).querySelector("a").href
+    getLink = nodes => nodes.item(1).querySelector("a").href
 
     songs = []
     el = document.querySelector(".songbydate-table")
@@ -131,9 +118,10 @@ function run() {
     for (let row of rows) {
         let cells = row.querySelectorAll("td")
         let id = getText(cells, 0)
-        let name = getText(cells, 2)
-        let ftr = getText(cells, 6)
-        let byd = getText(cells, 7)
+        let name = getText(cells, 1)
+        let ftr = getText(cells, 5)
+        let byd = getText(cells, 6)
+        console.log(byd)
         let link = getLink(cells)
         songs.push(new Song(
             id, name, ftr, byd, link
