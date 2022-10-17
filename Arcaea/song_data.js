@@ -24,7 +24,7 @@ function addNoteCount(link, name, difficulty, redirect=false) {
     if (!redirect) {
         requestReceived += 1;
     }
-    console.log("Adding " + name + (redirect ? " (Redirected)" : ""))
+    console.log("Adding " + name  + " " + difficulty + " " + (redirect ? " (Redirected)" : ""))
     let pageName = (redirect ? link : link.split("/").reverse()[0])
 
     fetch(`https://arcaea.fandom.com/api.php?action=query&titles=${pageName}&format=json`)
@@ -59,7 +59,7 @@ function addNoteCount(link, name, difficulty, redirect=false) {
                 addNoteCount(request.name, name, difficulty, true)
                 return
             } else {
-                console.log("Failed for song " + request.name)
+                console.log(request.header, "Failed for song " + request.name)
             }
         }
         requestProcessed += 1;
@@ -135,6 +135,7 @@ class Song {
         }
         return diffs.map(diff => [
                 this.name,
+                diff[0],
                 diff[1],
                 query(this.name, diff[0])
             ].join("\t")
@@ -173,9 +174,9 @@ function run() {
     rows = el.querySelectorAll("tbody tr")
     for (let row of rows) {
         let cells = row.querySelectorAll("td")
-        let name = getText(cells, 1)
-        let ftr = getText(cells, 5)
-        let byd = getText(cells, 6)
+        let name = getText(cells, 1).trim()
+        let ftr = getText(cells, 5).trim()
+        let byd = getText(cells, 6).trim()
         let link = getLink(cells)
         songs.push(new Song(
             name, ftr, byd, link
@@ -190,7 +191,7 @@ Progress: ${requestProcessed / requestReceived * 100}%`)
             clearInterval(interval)
             console.log("Request completed.")
         }
-    }, 5000)
+    }, 3000)
 }
 
 run()
